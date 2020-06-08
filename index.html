@@ -12,23 +12,6 @@
     <script src="https://unpkg.com/redux-thunk@2.2.0/dist/redux-thunk.min.js"></script>
 </head>
 <body>
-
-    <!-- <div>
-        <h1>Todo List</h1>
-        <input id="todo" type="text" placeholder="Add Todo">
-        <button id="todoBtn">Add Todo</button>
-        <ul id="todos"></ul>
-    </div>
-
-    <div>
-        <h1>Goals</h1>
-        <input id="goal" type="text" placeholder="Add Goal">
-        <button id="goalBtn">Add Goal</button>
-        <ul id="goals"></ul>
-    </div>
-
-    <hr /> -->
-
     <div id="app"></div>
 
 
@@ -200,26 +183,6 @@
             }
         }
 
-        // // Root reducer function to cater multiple reducers functions...
-        // function app(state = {}, action) {
-        //     return {
-        //         todos: todos(state.todos, action),
-        //         goals: goals(state.goals, action)
-        //     }
-        // }
-
-        // function checkAndDispatch(store, action) {
-        //     if(action.type === ADD_TODO && action.todo.name.toLowerCase().includes('bitcoin')) {
-        //        return alert('Nope, bad idea');
-        //     }
-
-        //     if(action.type === ADD_GOAL && action.goal.name.toLowerCase().includes('bitcoin')) {
-        //        return alert('Nope, bad idea');
-        //     }
-
-        //     return store.dispatch(action);
-        // }
-
         // Checker middleware...
         const checker = (state) => (next) => (action) => {
             if(action.type === ADD_TODO && action.todo.name.toLowerCase().includes('bitcoin')) {
@@ -261,81 +224,6 @@
             goals,
             loading
         }), Redux.applyMiddleware(ReduxThunk.default, checker, logger))
-
-        // store.subscribe(() => {
-        //     const { todos, goals } = store.getState();
-
-        //     document.getElementById('goals').innerHTML = '';
-        //     document.getElementById('todos').innerHTML = '';
-
-        //     todos.map(addTodoToDOM);
-        //     goals.map(addGoalToDOM)
-        // })
-
-        // function addTodo() {
-        //     const input = document.getElementById('todo');
-        //     const name = input.value;
-        //     input.value = '';
-
-        //     store.dispatch(addTodoAction({
-        //         name,
-        //         complete: false,
-        //         id: generateId()
-        //     }))
-        // }
-
-        // function addGoal() {
-        //     const input = document.getElementById('goal');
-        //     const name = input.value;
-        //     input.value = '';
-
-        //      store.dispatch(addGoalAction({
-        //         id: generateId(),
-        //         name
-        //     }))
-        // }
-
-        // document.getElementById('todoBtn').addEventListener('click', addTodo);
-        // document.getElementById('goalBtn').addEventListener('click', addGoal);
-
-        // function createRemoveBtn(onClick) {
-        //     const removeBtn = document.createElement('button');
-        //     removeBtn.innerHTML = 'X';
-        //     removeBtn.addEventListener('click', onClick);
-
-        //     return removeBtn;
-        // }
-
-
-        // function addTodoToDOM (todo) {
-        //     const node = document.createElement('li');
-        //     const text = document.createTextNode(todo.name);
-
-        //     const removeBtn = createRemoveBtn(() => {
-        //         store.dispatch(removeTodoAction(todo.id));
-        //     })
-        //     node.appendChild(text);
-        //     node.appendChild(removeBtn);
-        //     node.style.textDecoration = todo.complete ? 'line-through' : 'none';
-
-        //     node.addEventListener('click', () => {
-        //         store.dispatch(toggleTodoAction(todo.id))
-        //     })
-
-        //     document.getElementById('todos').appendChild(node);
-        // }
-
-        // function addGoalToDOM (goal) {
-        //     const node = document.createElement('li');
-        //     const text = document.createTextNode(goal.name);
-        //     const removeBtn = createRemoveBtn(() => {
-        //         store.dispatch(removeGoalAction(goal.id));
-        //     })
-        //     node.appendChild(text);
-        //     node.appendChild(removeBtn);
-
-        //     document.getElementById('goals').appendChild(node);
-        // }
 
     </script>
 
@@ -383,6 +271,12 @@
             }
         }
 
+        const ConnectedTodos = connect((state) => ({
+            todos: state.todos
+        }))(Todos)
+
+{/* Todos component ends----------------------------------------------------------------------------------------------- */}
+
         class Goals extends React.Component {
 
             addItem = (e) => {
@@ -417,6 +311,13 @@
             }
         }
 
+        const ConnectedGoals = connect((state) => ({
+            goals: state.goals
+        }))(Goals)
+
+{/* goals component ends----------------------------------------------------------------------------------- */}
+
+
         const List = (props) => {
             return (
                 <ul>
@@ -438,19 +339,15 @@
         class App extends React.Component {
 
             componentDidMount() {
-                const { store } = this.props;
+                const { dispatch } = this.props;
 
-                store.dispatch(handleInitialData())
+                dispatch(handleInitialData())
 
-                store.subscribe(() => this.forceUpdate());
+                // store.subscribe(() => this.forceUpdate()); //no its not required to subscribe manually..
             }
 
             render() {
-
-                const { store } = this.props;
-                const { loading } = store.getState();
-
-                if(loading) return (<h3>Loading...</h3>);
+                if(this.props.loading) return (<h3>Loading...</h3>);
 
                 return(
                     <div>
@@ -463,44 +360,9 @@
 
         const Context = React.createContext();
 
-        class ConnectedApp extends React.Component {
-            render () {
-                return (
-                    <Context.Consumer>
-                        {(store) => (
-                            <App store={store} />
-                        )}
-                    </Context.Consumer>
-                )
-            }
-        }
-
-        class ConnectedGoals extends React.Component {
-            render () {
-                return (
-                    <Context.Consumer>
-                        {(store) => {
-                            const { goals } = store.getState();
-
-                            <Goals goals={goals} dispatch={store.dispatch}/>
-                        }}
-                    </Context.Consumer>
-                )
-            }
-        }
-
-        class ConnectedTodos extends React.Commponent {
-            render () {
-                return (
-                    <Context.Consumer>
-                        {(store) => {
-                            const { todos } = store.getState();
-                            <Todos todos={todos} dispatch={store.dispatch} />
-                        }}
-                    </Context.Consumer>
-                )
-            }
-        }
+        const ConnectedApp = connect((state) => ({
+            loading: state.loading
+        }))(App)
 
         class Provider extends React.Component {
             render () {
